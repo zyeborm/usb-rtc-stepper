@@ -1,0 +1,360 @@
+Cmp-Mod V01 Created by Cvpcb (2014-jan-25)-product   date = Fri 04 Jul 2014 19:14:30 EST
+
+BeginCmp
+TimeStamp = /5229531B;
+Reference = +5v1;
+ValeurCmp = CONN_1;
+IdModule  = Connect:PINTST;
+EndCmp
+
+BeginCmp
+TimeStamp = /51E6268D;
+Reference = C1;
+ValeurCmp = 18pf;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /51E62693;
+Reference = C2;
+ValeurCmp = 18pf;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /51E62272;
+Reference = C3;
+ValeurCmp = 1uF;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /516523F5;
+Reference = C4;
+ValeurCmp = 10uF;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /5225B6F0;
+Reference = C5;
+ValeurCmp = .1uf;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /5225B6EA;
+Reference = C6;
+ValeurCmp = .1uf;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /5225B613;
+Reference = C7;
+ValeurCmp = .1uf;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /51E6288E;
+Reference = C8;
+ValeurCmp = .1uf;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /5225B544;
+Reference = C9;
+ValeurCmp = 1uf;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /53AD52B4;
+Reference = C11;
+ValeurCmp = .01uf;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /53AD3556;
+Reference = C12;
+ValeurCmp = .01uf;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /53AD3563;
+Reference = C13;
+ValeurCmp = 10uf;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /53AD3311;
+Reference = C14;
+ValeurCmp = 2.2uf;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /53AD3ADA;
+Reference = C15;
+ValeurCmp = 0.01uf;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /53B52AFC;
+Reference = C16;
+ValeurCmp = .1uf;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /52294FDF;
+Reference = D+1;
+ValeurCmp = CONN_1;
+IdModule  = Connect:PINTST;
+EndCmp
+
+BeginCmp
+TimeStamp = /52294FE5;
+Reference = D-1;
+ValeurCmp = CONN_1;
+IdModule  = Connect:PINTST;
+EndCmp
+
+BeginCmp
+TimeStamp = /53B412EB;
+Reference = D3;
+ValeurCmp = LED;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /53B414FA;
+Reference = D4;
+ValeurCmp = LED;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /52295321;
+Reference = GND2;
+ValeurCmp = CONN_1;
+IdModule  = Connect:PINTST;
+EndCmp
+
+BeginCmp
+TimeStamp = /53AD2AB0;
+Reference = IC1;
+ValeurCmp = DRV8834_SOP;
+IdModule  = 1:HTSSOP24;
+EndCmp
+
+BeginCmp
+TimeStamp = /53AD4445;
+Reference = Motor-A1;
+ValeurCmp = CONN_1;
+IdModule  = Connect:PINTST;
+EndCmp
+
+BeginCmp
+TimeStamp = /53AD444B;
+Reference = Motor-A2;
+ValeurCmp = CONN_1;
+IdModule  = Connect:PINTST;
+EndCmp
+
+BeginCmp
+TimeStamp = /53AD4439;
+Reference = Motor-B1;
+ValeurCmp = CONN_1;
+IdModule  = Connect:PINTST;
+EndCmp
+
+BeginCmp
+TimeStamp = /53AD443F;
+Reference = Motor-B2;
+ValeurCmp = CONN_1;
+IdModule  = Connect:PINTST;
+EndCmp
+
+BeginCmp
+TimeStamp = /51E62414;
+Reference = R1;
+ValeurCmp = 10K;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /51E6295B;
+Reference = R3;
+ValeurCmp = 10K;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /53A7D04D;
+Reference = R5;
+ValeurCmp = 10K;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /53A7D047;
+Reference = R6;
+ValeurCmp = 10K;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /53A7FC60;
+Reference = R7;
+ValeurCmp = 10K;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /53AD3029;
+Reference = R8;
+ValeurCmp = 10K;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /52295776;
+Reference = R9;
+ValeurCmp = 22;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /5229577C;
+Reference = R10;
+ValeurCmp = 22;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /53AD4CFF;
+Reference = R11;
+ValeurCmp = 10K;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /53A7FB9C;
+Reference = R12;
+ValeurCmp = 10K;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /53AD40CC;
+Reference = R13;
+ValeurCmp = trim-K;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /53AD40C6;
+Reference = R14;
+ValeurCmp = trim-K;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /53AD3C9B;
+Reference = R15;
+ValeurCmp = trim-K;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /53B40A5E;
+Reference = R18;
+ValeurCmp = 10K;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /53B41DF5;
+Reference = R19;
+ValeurCmp = 500R;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /53B41801;
+Reference = R20;
+ValeurCmp = 500R;
+IdModule  = SMD_Packages:SM0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /51E6236D;
+Reference = SW1;
+ValeurCmp = Reset;
+IdModule  = 2:SKHMQLE010;
+EndCmp
+
+BeginCmp
+TimeStamp = /51481CFB;
+Reference = SW2;
+ValeurCmp = HWB;
+IdModule  = 2:SKHMQLE010;
+EndCmp
+
+BeginCmp
+TimeStamp = /53A7FC54;
+Reference = SW3;
+ValeurCmp = Summer Time;
+IdModule  = 2:SKHMQLE010;
+EndCmp
+
+BeginCmp
+TimeStamp = /53A7FB90;
+Reference = SW4;
+ValeurCmp = RST-RTC;
+IdModule  = 2:SKHMQLE010;
+EndCmp
+
+BeginCmp
+TimeStamp = /53B3BA00;
+Reference = U1;
+ValeurCmp = ATmega32U4-AU;
+IdModule  = SMD_Packages:TQFP44;
+EndCmp
+
+BeginCmp
+TimeStamp = /53A7B9E7;
+Reference = U2;
+ValeurCmp = DS3231N;
+IdModule  = SMD_Packages:SO16N;
+EndCmp
+
+BeginCmp
+TimeStamp = /52294FF1;
+Reference = Usb_Gnd1;
+ValeurCmp = CONN_1;
+IdModule  = Connect:PINTST;
+EndCmp
+
+BeginCmp
+TimeStamp = /52294FEB;
+Reference = VBus1;
+ValeurCmp = CONN_1;
+IdModule  = Connect:PINTST;
+EndCmp
+
+BeginCmp
+TimeStamp = /53B3E308;
+Reference = X1;
+ValeurCmp = CRYSTAL;
+IdModule  = Crystals:Crystal_HC49-SD_SMD;
+EndCmp
+
+EndListe

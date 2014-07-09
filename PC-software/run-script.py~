@@ -1,0 +1,58 @@
+from __future__ import division
+
+import sys, os, serial, threading, time,csv,argparse
+import threading
+
+def read_from_port(ser):
+  while True:
+    #print("Reading")
+    print ser.readline().rstrip('\n')
+
+           
+
+parser = argparse.ArgumentParser(description='Send Data to a CounterSpin at a given rate, no buffering')
+parser.add_argument('SerialPortName', type=str, help='Name of the serial port eg linux /dev/ttyACM0 (check permissions) or on windows COM12')
+parser.add_argument('UpdateRate', type=float, help='How many seconds per line')
+parser.add_argument('ScriptFile',  type=str,  help='Path to the script file')
+args = parser.parse_args()
+
+ser = serial.Serial(args.SerialPortName, 115200, timeout=None) #blocking read timeout
+
+
+csv_file = csv.DictReader(open(args.ScriptFile, 'rb'), delimiter=',', quotechar='"')
+
+interval = args.UpdateRate 
+
+try:
+  rxbuff = ""
+  txbuff = ""
+
+  print("Opened %s for sending at an interval of %07.3f Seconds" % (ser.portstr,interval))       # check which port was really used
+
+  thread = threading.Thread(target=read_from_port, args=(ser,))
+  thread.daemon = True
+  thread.start()
+  start_time = time.time()
+  next_time = 0
+  #for x in range (0,10):
+
+  for line in csv_file:
+    next_time = next_time + interval
+    txbuff = line["Inner"] + " " + line["Outer"] + "\r"
+    txbuff.encode("ASCII")
+    
+    print txbuff
+    ser.write(txbuff)      # send the packet
+    while (time.time() - start_time) < next_time: #wait for the time interval to pass, terrible i know
+      time.sleep(.1)  
+      
+  next_time = next_time + interval
+  while (time.time() - start_time) < next_time: #wait for the time interval to pass, terrible i know
+    time.sleep(.1)
+  print("Finishing")            
+except:
+  print "exiting on signal"
+  ser.write("0 0\r")  
+ser.write("0 0\r")  
+       
+   

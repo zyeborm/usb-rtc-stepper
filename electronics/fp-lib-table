@@ -1,0 +1,4 @@
+(fp_lib_table
+  (lib (name 1)(type KiCad)(uri /home/jake/work/vf/clocks/mains-powered-stepper/electronics/)(options "")(descr ""))
+  (lib (name 2)(type KiCad)(uri /home/jake/work/vf/clocks/mains-powered-stepper/electronics/switch.pretty)(options "")(descr ""))
+)

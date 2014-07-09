@@ -1,0 +1,505 @@
+/*
+             LUFA Library
+     Copyright (C) Dean Camera, 2013.
+
+  dean [at] fourwalledcubicle [dot] com
+           www.lufa-lib.org
+*/
+
+/*
+  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+
+  Permission to use, copy, modify, distribute, and sell this
+  software and its documentation for any purpose is hereby granted
+  without fee, provided that the above copyright notice appear in
+  all copies and that both that the copyright notice and this
+  permission notice and warranty disclaimer appear in supporting
+  documentation, and that the name of the author not be used in
+  advertising or publicity pertaining to distribution of the
+  software without specific, written prior permission.
+
+  The author disclaims all warranties with regard to this
+  software, including all implied warranties of merchantability
+  and fitness.  In no event shall the author be liable for any
+  special, indirect or consequential damages or any damages
+  whatsoever resulting from loss of use, data or profits, whether
+  in an action of contract, negligence or other tortious action,
+  arising out of or in connection with the use or performance of
+  this software.
+*/
+
+/** \file
+ *
+ *  Main source file for the VirtualSerial demo. This file contains the main tasks of
+ *  the demo and is responsible for the initial application hardware configuration.
+ */
+
+#include "VirtualSerial.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <inttypes.h>
+#include <util/delay.h>
+
+#define RX_ARRAY_SIZE 15
+
+/** LUFA CDC Class driver interface configuration and state information. This structure is
+ *  passed to all CDC Class driver functions, so that multiple instances of the same class
+ *  within a device can be differentiated from one another.
+ */
+volatile int32_t inner_set_RPS;
+volatile int32_t outer_set_RPS;
+volatile int32_t inner_current_RPS;
+volatile int32_t outer_current_RPS;
+volatile uint8_t timer_ticked;
+volatile uint16_t pot_l;
+volatile uint16_t pot_r;
+volatile uint16_t timer1_buffer;
+volatile uint16_t timer3_buffer;
+volatile uint8_t USB_Connected;
+
+#define ACCELERATION 32 //RPS per 100hz tick, 
+#define POT_L_MUX 0b01000001 //adc1 left adjust vcc vref
+#define POT_R_MUX 0b01000000 //adc0 right adjust vcc vref
+
+USB_ClassInfo_CDC_Device_t VirtualSerial_CDC_Interface =
+	{
+		.Config =
+			{
+				.ControlInterfaceNumber   = 0,
+				.DataINEndpoint           =
+					{
+						.Address          = CDC_TX_EPADDR,
+						.Size             = CDC_TXRX_EPSIZE,
+						.Banks            = 1,
+					},
+				.DataOUTEndpoint =
+					{
+						.Address          = CDC_RX_EPADDR,
+						.Size             = CDC_TXRX_EPSIZE,
+						.Banks            = 1,
+					},
+				.NotificationEndpoint =
+					{
+						.Address          = CDC_NOTIFICATION_EPADDR,
+						.Size             = CDC_NOTIFICATION_EPSIZE,
+						.Banks            = 1,
+					},
+			},
+	};
+
+/** Standard file stream for the CDC interface when set up, so that the virtual CDC COM port can be
+ *  used like any regular character stream in the C APIs
+ */
+static FILE USBSerialStream;
+
+
+/** Main program entry point. This routine contains the overall program flow, including initial
+ *  setup of all components and the main program loop.
+ */
+int main(void)
+{
+	SetupHardware();
+inner_set_RPS = 0;
+outer_set_RPS = 0;
+inner_current_RPS = 0;
+outer_current_RPS = 0;  
+timer1_buffer = 65534;
+timer3_buffer = 65534;
+USB_Connected = 0;
+char rx_buffer[RX_ARRAY_SIZE];
+memset(rx_buffer,'\0',RX_ARRAY_SIZE); 
+	
+	/* Create a regular character stream for the interface so that it can be used with the stdio.h functions */
+	CDC_Device_CreateStream(&VirtualSerial_CDC_Interface, &USBSerialStream);
+
+
+	GlobalInterruptEnable();
+  _delay_ms(1000); //settle
+  if (USB_Connected == 1)
+  {
+    fprintf(&USBSerialStream,"Accepts 2 long ints in ascii format, max 19000 min 124, EG '18750 -5000' terminated by CR value is inner,outer speed in miliRPS\r\n");
+    fprintf(&USBSerialStream,"CounterSpin V0.2,inner_current_RPS,outer_current_RPS,inner_set_RPS,outer_set_RPS,pot_l,pot_r,ICR3,ICR1,BT_INNER,BT_OUTER,MAN_MODE,BT_LEFT_AUX,BT_RIGHT_AUX\r\n");
+  }
+  
+
+  CDC_Device_USBTask(&VirtualSerial_CDC_Interface);
+	USB_USBTask();
+	for (;;)
+	{
+	  static uint8_t recieve_ptr = 0;
+	  uint8_t packet_rxed = 0;
+	  
+    if (timer_ticked == 1)
+    {
+      int32_t difference;
+      if (inner_set_RPS > 19000)
+      {
+        inner_set_RPS = 19000;
+      }
+      if (inner_set_RPS < -19000)
+      {
+        inner_set_RPS = -19000;
+      }
+
+      if (outer_set_RPS > 19000)
+      {
+        outer_set_RPS = 19000;
+      }
+      if (outer_set_RPS < -19000)
+      {
+        outer_set_RPS = -19000;
+      }
+      
+   if (inner_set_RPS != inner_current_RPS)
+      {
+         difference = inner_current_RPS - inner_set_RPS;
+         if (difference != 0)
+         {
+           if (abs(difference) < ACCELERATION)
+           {
+              inner_current_RPS = inner_set_RPS;
+           } else {
+              if (difference < 0)
+              {
+                inner_current_RPS += ACCELERATION;
+              } else {
+                inner_current_RPS -= ACCELERATION;
+              }
+           }
+         }
+       }
+       if (fabs(inner_current_RPS) > 123)
+       {
+         timer3_buffer= (160000000/(abs(inner_current_RPS))) /20;
+         PRR1 &= ~(1<<PRTIM3); //Enable Timer 3 power
+       }
+       else {
+        timer3_buffer = 65534;        
+        PRR1 |= (1<<PRTIM3);   // disable the timer3 module by setting its power saving to on
+       } 
+       if (inner_current_RPS > 0)
+       {
+         C_SETBIT(INNER_DIRECTION);
+       } else {
+         C_CLEARBIT(INNER_DIRECTION);
+       }      
+
+
+       
+      if (outer_set_RPS != outer_current_RPS)
+      {
+         difference = outer_current_RPS - outer_set_RPS;
+         if (difference != 0)
+         {
+           if (abs(difference) < ACCELERATION)
+           {
+              outer_current_RPS = outer_set_RPS;
+           } else {
+              if (difference < 0)
+              {
+                outer_current_RPS += ACCELERATION;
+              } else {
+                outer_current_RPS -= ACCELERATION;
+              }
+           }
+         }
+       }
+       if (fabs(outer_current_RPS) > 123)
+       {
+         timer1_buffer = (160000000/(abs(outer_current_RPS))) /20;
+         PRR0 &= ~(1<<PRTIM1) ;  // enable the timer1 module power  
+       }
+       else {       
+        timer1_buffer = 65534;
+        PRR0 |= (1<<PRTIM1);  // disable the timer1 module power  
+       }          
+       if (outer_current_RPS > 0)
+       {
+         C_SETBIT(OUTER_DIRECTION);
+       } else {
+         C_CLEARBIT(OUTER_DIRECTION);
+       } 
+
+      
+      
+      
+       static uint8_t flasher;  
+       flasher++;
+       if (flasher == 10) //10 Hz
+       {
+         /*human friendly output
+         fprintf(&USBSerialStream,"%c[2J", 0x1B);
+         fprintf(&USBSerialStream,"SET 1 = %li (%u) : 2 = %li (%u)\r\n", inner_current_RPS,ICR3,outer_current_RPS,ICR1);
+         fprintf(&USBSerialStream,"CUR 1 = %li : 2 = %li\r\n", inner_set_RPS,outer_set_RPS);
+         fprintf(&USBSerialStream,"POT L = %u : R = %u\r\n", pot_l,pot_r);           
+         fprintf(&USBSerialStream,"Counterspin # : %s\r\n",rx_buffer);
+         */
+         if (USB_Connected == 1)
+         {
+           fprintf(&USBSerialStream,"CounterSpin V0.2, %6li,%6li,%6li,%6li,%6u,%6u,%6u,%6u,",inner_current_RPS,outer_current_RPS,inner_set_RPS,outer_set_RPS,pot_l,pot_r,ICR3,ICR1);
+           if (!C_CHECKBIT(BT_INNER))  //active low, button is pressed
+           {
+             fprintf(&USBSerialStream,"1,");                  
+           }  else {
+             fprintf(&USBSerialStream,"0,");                  
+           }
+           if (!C_CHECKBIT(BT_OUTER))  //active low, button is pressed
+           {
+             fprintf(&USBSerialStream,"1,");                  
+           }  else {
+             fprintf(&USBSerialStream,"0,");                  
+           }
+           if (!C_CHECKBIT(MAN_MODE))  //active low, button is pressed
+           {
+             fprintf(&USBSerialStream,"1,");                  
+           } else {
+             fprintf(&USBSerialStream,"0,");                  
+           }
+           if (!C_CHECKBIT(BT_LEFT_AUX))  //active low, button is pressed
+           {
+             fprintf(&USBSerialStream,"1,");                  
+           } else {
+             fprintf(&USBSerialStream,"0,");                  
+           }  
+           if (!C_CHECKBIT(BT_RIGHT_AUX))  //active low, button is pressed
+           {
+             fprintf(&USBSerialStream,"1,");                  
+           } else {
+             fprintf(&USBSerialStream,"0,");                  
+           }         
+             fprintf(&USBSerialStream,"\r\n");
+         }
+         C_FLIPBIT(FLASHER2_LED);    
+         flasher = 0;
+       } 
+       timer_ticked = 0;
+
+       if (!C_CHECKBIT(MAN_MODE))  //active low, button is pressed
+       {
+          inner_set_RPS = pot_l * 16;
+          outer_set_RPS = pot_r * 16;
+          if (!C_CHECKBIT(BT_INNER))
+          {
+            inner_set_RPS = inner_set_RPS *-1;
+          }            
+         if (!C_CHECKBIT(BT_OUTER))
+          {
+            outer_set_RPS = outer_set_RPS *-1;
+          }          
+       }
+       ADCSRA |= (1 << ADSC);  // Enable ADC
+    }
+
+		/* Recieve Data*/
+		if (CDC_Device_BytesReceived(&VirtualSerial_CDC_Interface)) 
+    { 
+
+	  
+      rx_buffer[recieve_ptr] = CDC_Device_ReceiveByte(&VirtualSerial_CDC_Interface);   
+
+      if (rx_buffer[recieve_ptr] == '\r')
+      {
+        rx_buffer[recieve_ptr] = '\0'; //end the string on rx of CR
+        packet_rxed = 1;
+      }
+
+
+   	  if (recieve_ptr >= RX_ARRAY_SIZE) // too much data
+	    {
+	      recieve_ptr = 0;	      
+	      fputs("\r\nRX Overflow\r\n", &USBSerialStream);
+	    } else {
+	      recieve_ptr++;
+	    }
+	    
+    } 
+   
+
+    if (packet_rxed == 1)
+    {
+  	  if (sscanf(rx_buffer,"%li %li" SCNu16,&inner_set_RPS,&outer_set_RPS) == 2)
+    	{
+      //should handle sscanf better here
+      } else {
+        fprintf(&USBSerialStream,"\r\nInvalid Data\r\n");
+      }
+      recieve_ptr = 0;
+      memset(rx_buffer,'\0',RX_ARRAY_SIZE); 
+      packet_rxed = 0;      
+
+    }
+    
+		CDC_Device_USBTask(&VirtualSerial_CDC_Interface);
+		USB_USBTask();
+	}
+}
+
+/** Configures the board hardware and chip peripherals for the demo's functionality. */
+void SetupHardware(void)
+{
+	/* Hardware Initialization */
+	MCUCR=(1<<JTD); 
+  MCUCR=(1<<JTD);
+  
+	/* Disable watchdog if enabled by bootloader/fuses */
+	MCUSR &= ~(1 << WDRF);
+	wdt_disable();
+
+	/* Disable clock division */
+	clock_prescale_set(clock_div_1);
+
+  SETBIT(FLASHER_DDR,FLASHER_PIN);
+  C_SETBIT(FLASHER_LED);
+
+  SETBIT(FLASHER2_DDR,FLASHER2_PIN);
+  C_SETBIT(FLASHER2_LED);
+  
+  SETBIT(TIMER3_PWM_DDR,TIMER3_PWM_PIN);
+  C_SETBIT(TIMER3_PWM);
+
+  SETBIT(TIMER1_PWM_DDR,TIMER1_PWM_PIN);
+  C_SETBIT(TIMER1_PWM);  
+
+  SETBIT(INNER_DIRECTION_DDR,INNER_DIRECTION_PIN);
+  C_SETBIT(INNER_DIRECTION);
+
+  SETBIT(OUTER_DIRECTION_DDR,OUTER_DIRECTION_PIN);
+  C_SETBIT(OUTER_DIRECTION);
+    
+  CLEARBIT(BT_OUTER_DDR,BT_OUTER_PIN);
+  C_SETBIT(BT_OUTER_OUT); //pullup  
+
+  CLEARBIT(BT_LEFT_AUX_DDR,BT_LEFT_AUX_PIN);
+  C_SETBIT(BT_LEFT_AUX_OUT); //pull up
+
+  CLEARBIT(BT_RIGHT_AUX_DDR,BT_RIGHT_AUX_PIN);
+  C_SETBIT(BT_RIGHT_AUX_OUT); //pull up
+    
+  CLEARBIT(MAN_MODE_DDR,MAN_MODE_PIN);
+  C_SETBIT(MAN_MODE_OUT); //pullup  
+
+  CLEARBIT(BT_INNER_DDR,BT_INNER_PIN);
+  C_SETBIT(BT_INNER_OUT); //pullup   
+  
+  TCCR3A |= (1 << WGM31) | ( 1 << COM3A1);  //set for fast PWM with ICN3 as the top, output enabled set on top clear on match
+  TCCR3B |= (1 << CS30)| (1 << WGM33)|(1 << WGM32); //no prescaler, set for fast PWM with ocr3a as the top
+  TIMSK3 |= (1<<TOIE3); //enable overflow interrupt
+
+  ICR3 = 65534; 
+  OCR3A = 32; // put out a fixed pulse output
+//  PRR1 |= (1<<PRTIM3);   // disable the timer3 module power     
+
+  TCCR1A |= (1 << WGM11)| ( 1 << COM1A1);  //set for fast PWM with ICR1 as the top
+  TCCR1B |= (1 << CS30)| (1 << WGM13)|(1 << WGM12); //no prescaler, set for fast PWM with ocr3a as the top
+  TIMSK1 |= (1<<TOIE1); //enable overflow interrupt
+  ICR1 = 65534;
+  OCR1A = 32;
+//  PRR0 |= (1<<PRTIM1);  // disable the timer1 module power    
+  
+  //timer0 used for timekeeping
+  TCCR0A |= (1 << WGM11); //set to CTC with top at OCR0A
+  TCCR0B |= (1 << CS02)| ( 1 << CS00); //clck is fosc/1024
+  TIMSK0 |= (1<<OCIE0A); //enable interrupt on compare (not overflow)
+
+  OCR0A = 155; //set for 100.16Hz
+
+// ADC init
+  ADMUX = POT_L_MUX; //give it something to start with
+  ADCSRA |= (1 << ADIE);  // Enable ADC Interrupt 
+  ADCSRA |= (1 << ADEN);  // Enable ADC 
+    
+	//Joystick_Init();
+	//LEDs_Init();
+	USB_Init();
+}
+
+
+
+/** Event handler for the library USB Connection event. */
+void EVENT_USB_Device_Connect(void)
+{
+	//LEDs_SetAllLEDs(LEDMASK_USB_ENUMERATING);
+}
+
+/** Event handler for the library USB Disconnection event. */
+void EVENT_USB_Device_Disconnect(void)
+{
+	//LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
+}
+
+/** Event handler for the library USB Configuration Changed event. */
+void EVENT_USB_Device_ConfigurationChanged(void)
+{
+	bool ConfigSuccess = true;
+
+	ConfigSuccess &= CDC_Device_ConfigureEndpoints(&VirtualSerial_CDC_Interface);
+
+	//LEDs_SetAllLEDs(ConfigSuccess ? LEDMASK_USB_READY : LEDMASK_USB_ERROR);
+}
+
+/** Event handler for the library USB Control Request reception event. */
+void EVENT_USB_Device_ControlRequest(void)
+{
+	CDC_Device_ProcessControlRequest(&VirtualSerial_CDC_Interface);
+}
+
+void EVENT_CDC_Device_ControLineStateChanged(USB_ClassInfo_CDC_Device_t* const CDCInterfaceInfo) 
+{ 
+        static bool PreviousDTRState = false; 
+        bool        CurrentDTRState  = (CDCInterfaceInfo->State.ControlLineStates.HostToDevice & CDC_CONTROL_LINE_OUT_DTR); 
+
+        /* Check if the DTR line has been asserted */ 
+        if (!(PreviousDTRState) && CurrentDTRState) 
+        { 
+         // PreviousDTRState == False AND CurrentDTRState == True 
+         // Host application has Connected to the COM port 
+         // Set LED On    
+            //LEDs_TurnOffLEDs(LEDS_LED1);         // this actually turns LED on 
+                                        // (bug in LED driver for OLIMEX board - LUFA-120219) 
+         C_SETBIT(FLASHER_LED);
+         USB_Connected = 1;
+        } 
+        else 
+        { 
+        if (PreviousDTRState && !(CurrentDTRState) ) 
+        { 
+          // PreviousDTRState == True AND CurrentDTRState == False 
+          // Host application has Disconnected from the COM port 
+          // Set LED Off    
+            // LEDs_TurnOnLEDs(LEDS_LED1);      // this actually turns the LED off 
+                                    // (bug in LED driver for OLIMEX board - LUFA-120219) 
+         C_CLEARBIT(FLASHER_LED);
+         USB_Connected = 0;         
+        }                  
+      }          
+        PreviousDTRState = CurrentDTRState; 
+} 
+
+ISR(TIMER3_OVF_vect)
+{
+  ICR3 = timer3_buffer;
+}
+
+ISR(TIMER1_OVF_vect)
+{
+  ICR1 = timer1_buffer;
+}
+
+ISR(TIMER0_COMPA_vect)
+{
+
+ timer_ticked = 1; 
+}
+
+ISR(ADC_vect) 
+{
+  if (ADMUX == POT_L_MUX)
+  {  
+    pot_l = ADC;
+    ADMUX = POT_R_MUX;
+  }  else  {
+    pot_r = ADC;
+    ADMUX = POT_L_MUX;
+  }
+}
